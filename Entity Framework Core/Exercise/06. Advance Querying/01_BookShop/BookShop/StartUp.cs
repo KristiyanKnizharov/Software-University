@@ -1,4 +1,4 @@
-﻿namespace BookShop
+namespace BookShop
 {
     using BookShop.Models.Enums;
     using Data;
@@ -21,19 +21,25 @@
 
             //Problem 03
             //string result = GetGoldenBooks(db);
-            
+
             //Problem 04
             //string result = GetBooksByPrice(db);
 
             //Problem 05
-            int input = int.Parse(Console.ReadLine());
-            string result = GetBooksNotReleasedIn(db, input);
+            //int data = int.Parse(Console.ReadLine());
+            //string result = GetBooksNotReleasedIn(db, data);
+
             //Problem 06
-            //string result = GetGoldenBooks(db, input);
+            string input = Console.ReadLine();
+            string result = GetBooksByCategory(db, input);
+
             //Problem 07
-            //string result = GetGoldenBooks(db, input);
+            //int data = int.Parse(Console.ReadLine());
+            //string result = GetBooksReleasedBefore(db, date);
+
             //Problem 08
-            //string result = GetGoldenBooks(db, input);
+            //string input = Console.ReadLine();
+            //string result = GetAuthorNamesEndingIn(db, input);
 
             Console.WriteLine(result);
         }
@@ -94,6 +100,7 @@
             return sb.ToString().TrimEnd();
         }
 
+        //Problem 05
         public static string GetBooksNotReleasedIn(BookShopContext context, int year)
         {
             StringBuilder sb = new StringBuilder();
@@ -113,5 +120,36 @@
             return sb.ToString().TrimEnd();
         }
 
+        //Problem 06
+        public static string GetBooksByCategory(BookShopContext context, string input)
+        {
+            StringBuilder sb = new StringBuilder();
+
+            var categories = input.Split(" ", StringSplitOptions.RemoveEmptyEntries).ToList();
+
+            var book = new List<string>();
+
+            foreach (var category in categories)
+            {
+                var curentBook = context.Books
+                                  .Where(b => b.BookCategories.Any(c => c.Category.Name.ToLower() == category.ToLower()))
+                                  .Select(b => new { b.Title })
+                                  .ToList();
+
+                foreach (var cb in curentBook)
+                {
+                    book.Add(cb.Title);
+                }
+            }
+
+            foreach (var t in book.OrderBy(t => t))
+            {
+                sb.AppendLine(t);
+            }
+
+            return sb.ToString().TrimEnd();
+        }
+
+        
     }
 }
