@@ -30,8 +30,8 @@ namespace BookShop
             //string result = GetBooksNotReleasedIn(db, data);
 
             //Problem 06
-            string input = Console.ReadLine();
-            string result = GetBooksByCategory(db, input);
+            //string input = Console.ReadLine();
+            //string result = GetBooksByCategory(db, input);
 
             //Problem 07
             //int data = int.Parse(Console.ReadLine());
