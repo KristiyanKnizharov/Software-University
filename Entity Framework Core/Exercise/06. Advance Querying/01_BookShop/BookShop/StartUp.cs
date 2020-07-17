@@ -1,11 +1,12 @@
 namespace BookShop
 {
-    using BookShop.Models.Enums;
     using Data;
     using System;
-    using System.Collections.Generic;
     using System.Linq;
     using System.Text;
+    using System.Globalization;
+    using BookShop.Models.Enums;
+    using System.Collections.Generic;
 
     public class StartUp
     {
@@ -34,14 +35,14 @@ namespace BookShop
             //string result = GetBooksByCategory(db, input);
 
             //Problem 07
-            //int data = int.Parse(Console.ReadLine());
+            //string date = Console.ReadLine();
             //string result = GetBooksReleasedBefore(db, date);
 
             //Problem 08
             //string input = Console.ReadLine();
             //string result = GetAuthorNamesEndingIn(db, input);
 
-            Console.WriteLine(result);
+            //Console.WriteLine(result);
         }
 
         //Problem 02
@@ -150,6 +151,50 @@ namespace BookShop
             return sb.ToString().TrimEnd();
         }
 
-        
+        //Problem 07
+        public static string GetBooksReleasedBefore(BookShopContext context, string date)
+        {
+            StringBuilder sb = new StringBuilder();
+
+            var books = context.Books
+                               .Where(b => b.ReleaseDate < DateTime.ParseExact(date, "dd-MM-yyyy", CultureInfo.CurrentCulture))
+                               .Select(b => new { b.Title, b.EditionType, b.Price, b.ReleaseDate })
+                               .OrderByDescending(b => b.ReleaseDate)
+                               .ToList();
+
+
+            foreach (var b in books)
+            {
+                sb.AppendLine($"{b.Title} - {b.EditionType} - ${b.Price:f2}");
+            }
+
+            return sb.ToString().TrimEnd();
+        }
+
+        //Problem 08
+        public static string GetAuthorNamesEndingIn(BookShopContext context, string input)
+        {
+            StringBuilder sb = new StringBuilder();
+
+            var authors = context
+                               .Authors
+                               .AsEnumerable()
+                               .Where(a => a.FirstName.EndsWith(input))
+                               .Select(a => new 
+                               { 
+                                 Name = a.FirstName + " " + a.LastName
+                               })
+                               .OrderBy(a => a.Name)
+                               .ToList();
+
+
+            foreach (var author in authors)
+            {
+                sb.AppendLine($"{author.Name}");
+            }
+
+            return sb.ToString().TrimEnd();
+        }
+
     }
 }
