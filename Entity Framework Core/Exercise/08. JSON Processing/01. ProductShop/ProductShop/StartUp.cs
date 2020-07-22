@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -13,6 +13,7 @@ namespace ProductShop
 {
     public class StartUp
     {
+        private static string ResultDirectoryPath = @"../../../Datasets/Results";
         public static void Main(string[] args)
         {
             var context = new ProductShopContext();
@@ -33,7 +34,25 @@ namespace ProductShop
             //var dataJson = File.ReadAllText(@"..\..\..\Datasets\categories-products.json");
             //Console.WriteLine(ImportCategoryProducts(context, dataJson));
 
-            
+            //Task 05 
+            //EnsureDirectoryExist(ResultDirectoryPath);
+            //File.WriteAllText(ResultDirectoryPath + "/products-in-range.json", GetProductsInRange(context));
+
+            //Task 06
+            //EnsureDirectoryExist(ResultDirectoryPath);
+            //File.WriteAllText(ResultDirectoryPath + "/users-sold-products.json", GetSoldProducts(context));
+
+            //Task 07
+            //EnsureDirectoryExist(ResultDirectoryPath);
+            //File.WriteAllText(ResultDirectoryPath +
+            //    "/categories-by-products.json",
+            //    GetCategoriesByProductsCount(context));
+
+            //Task 08
+            //EnsureDirectoryExist(ResultDirectoryPath);
+            //File.WriteAllText(ResultDirectoryPath +
+            //    "/users-and-products.json",
+            //    GetUsersWithProducts(context));
         }
 
         public static void ResetDatabase(ProductShopContext db)
@@ -45,6 +64,7 @@ namespace ProductShop
 
         }
 
+        //Desirialization
         public static string ImportUsers
             (ProductShopContext context,string inputJson)
         {
@@ -98,9 +118,123 @@ namespace ProductShop
         }
 
 
+        //Serialization
+        private static void EnsureDirectoryExist(string path)
+        {
+            if (!Directory.Exists(path))
+            {
+                Directory.CreateDirectory(path);
+            }
+        }
+        public static string GetProductsInRange(ProductShopContext context)
+        {
+            var products = context
+                    .Products
+                    .Where(p => (p.Price >= 500) && (p.Price <= 1000))
+                    .OrderBy(p => p.Price)
+                    .Select(info => new
+                    {
+                        name = info.Name,
+                        price = info.Price,
+                        seller = $"{info.Seller.FirstName} {info.Seller.LastName}"
+                    })
+                    .ToList();
 
+            string json = JsonConvert.SerializeObject
+                (products, Formatting.Indented);
 
-        public static void NewDatabase(ProductShopContext context)
+            return json;
+        }
+
+        public static string GetSoldProducts(ProductShopContext context)
+        {
+            var soldProducts = context
+                    .Users
+                    .Where(u => u.ProductsSold.Count >= 1)
+                    .OrderBy(u => u.FirstName)
+                    .Select(user => new
+                    {
+                        firstName = user.FirstName,
+                        lastName = user.LastName,
+                        soldProducts = user.ProductsSold.Select(sp => new
+                        {
+                            name = sp.Name,
+                            price = sp.Price,
+                            buyerFirstName = sp.Buyer.FirstName,
+                            buyerLastName = sp.Buyer.LastName
+                        })
+                    })
+                    .ToList();
+
+            string json = JsonConvert.SerializeObject
+                (soldProducts, Formatting.Indented);
+
+            return json;
+        }
+
+        public static string GetCategoriesByProductsCount
+            (ProductShopContext context)
+        {
+            var categories = context
+                    .Categories
+                    .Select(c => new
+                    {
+                        category = c.Name,
+                        productsCount = c.CategoryProducts.Count(),
+                        averagePrice = c.CategoryProducts
+                            .Average(cp => cp.Product.Price).ToString("f2"),
+                        totalRevenue = c.CategoryProducts
+                            .Sum(cp => cp.Product.Price).ToString("f2"),
+                        
+                    })
+                    .OrderByDescending(c => c.productsCount)
+                    .ToList();
+
+            string json = JsonConvert.SerializeObject(categories,
+                Formatting.Indented);
+
+            return json;
+        }
+
+        public static string GetUsersWithProducts
+            (ProductShopContext context)
+        {
+            var curentUsers = context.Users
+                             .AsEnumerable()
+                             .Where(p => p.ProductsSold.Any(b => b.Buyer != null))
+                             .OrderByDescending(p => p.ProductsSold.Count(c => c.Buyer != null))
+                             .Select(c => new
+                             {
+                                 lastName = c.LastName,
+                                 age = c.Age,
+                                 soldProducts = new
+                                 {
+                                     count = c.ProductsSold.Count(b => b.Buyer != null),
+                                     products = c.ProductsSold
+                                                 .Where(x => x.Buyer != null)
+                                                 .Select(y => new
+                                                 {
+                                                     name = y.Name,
+                                                     price = y.Price
+                                                 })
+                                                 .ToList()
+                                 }
+                             })
+                             .ToList();
+
+            var result = new
+            {
+                usersCount = curentUsers.Count,
+                users = curentUsers
+            };
+
+            string json = JsonConvert.SerializeObject(result,
+                Formatting.Indented);
+
+            return json;
+        }
+
+        /*public static void NewDatabase(ProductShopContext context)
         {
             var usersJson = File.ReadAllText
                 (@"..\..\..\Datasets\users.json");
@@ -124,5 +258,6 @@ namespace ProductShop
 
             Console.WriteLine(result);
         }
+        */
     }
 }
