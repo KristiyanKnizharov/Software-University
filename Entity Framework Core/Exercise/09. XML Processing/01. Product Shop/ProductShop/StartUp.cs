@@ -139,25 +139,30 @@ namespace ProductShop
         public static string ImportCategoryProducts
             (ProductShopContext context, string inputXml)
         {
-            const string rootElement = "CategoryProducts";
+            var categoryProductsDtos = XmlConverter
+                .Deserializer<ImportCategoriesProductsDto>(inputXml, "CategoryProducts");
 
-            var categoriesProductsResult = XmlConverter
-                .Deserializer<ImportCategoryProductDto>(inputXml, rootElement);
+            List<CategoryProduct> categoryProducts = new List<CategoryProduct>();
 
-            var categoriesCount = context.Categories.Count();
-            var productsCount = context.Products.Count();
-
-            var categoriesProducts = categoriesProductsResult
-                .Where(x => x.CategoryId <= categoriesCount && x.ProductId <= productsCount)
-                .Select(x => new CategoryProduct 
+            foreach (var catProdDto in categoryProductsDtos)
+            {
+                if (context.Categories.Any(x => x.Id == catProdDto.CategoryId) &&
+                    context.Products.Any(y => y.Id == catProdDto.ProductId))
                 {
-                    CategoryId = x.CategoryId,
-                    ProductId = x.ProductId })
-                .ToArray();
-            context.AddRange(categoriesProducts);
+                    var newCategoryProduct = new CategoryProduct
+                    {
+                        CategoryId = catProdDto.CategoryId,
+                        ProductId = catProdDto.ProductId
+                    };
+
+                    categoryProducts.Add(newCategoryProduct);
+                }
+            }
+
+            context.CategoryProducts.AddRange(categoryProducts);
             context.SaveChanges();
 
-            return $"Successfully imported {categoriesProducts.Length}";
+            return $"Successfully imported {categoryProducts.Count}";
         }
 
         //Task 05.
